@@ -13,8 +13,8 @@ import KeyManager from './key-manager';
 import KeyAdder from './key-adder';
 
 
-class PreferencesKeybase extends React.Component {
-  static displayName = "PreferencesKeybase";
+class PreferencesEncryption extends React.Component {
+  static displayName = "PreferencesEncryption";
 
   constructor(props) {
     super(props);
@@ -26,11 +26,6 @@ class PreferencesKeybase extends React.Component {
     this._keySaveQueue = {};
 
     this.state = this._getStateFromStores();
-    {/* const { pubKeys, privKeys } = this._getStateFromStores();
-    this.state = {
-      pubKeys,
-      privKeys
-    }; */}
   }
 
   componentDidMount() {
@@ -52,14 +47,20 @@ class PreferencesKeybase extends React.Component {
     if (!accounts.find(acct => acct === currentAccount)) {
       currentAccount = accounts[0];
     }
+    const contacts = AccountStore.aliasesFor(accounts);
+    console.log(contacts);
     const pubKeys = PGPKeyStore.pubKeys();
     const privKeys = PGPKeyStore.privKeys({ timed: false });
     return {
-      accounts: accounts,
+      contacts: contacts,
       currentAccount: currentAccount,
       pubKeys: pubKeys,
       privKeys: privKeys
     };
+  }
+
+  _renderContactHeadline(contact) {
+    return (contact.name !== "") ? contact.name + " <" + contact.email + ">" : contact.email;
   }
 
   _renderKeys() {
@@ -84,6 +85,7 @@ class PreferencesKeybase extends React.Component {
   }
 
   render() {
+
     const noKeysMessage = (
       <div className="key-status-bar no-keys-message">{`\
 You have no saved PGP keys!\
@@ -96,7 +98,14 @@ You have no saved PGP keys!\
 
     return (
       <div className="container-keybase">
-        <section>{this._renderKeys()}</section>
+        <section>
+          {this.state.contacts.map(contact => (
+          <div key={contact.id}>
+            <div className="account-section-title">{this._renderContactHeadline(contact)}</div>
+            <div className="contact-pgp-keys">PGP Keys</div>
+          </div>
+          ))}
+        </section>
         <section className="key-add">
           <KeyAdder />
         </section>
@@ -111,4 +120,4 @@ You have no saved PGP keys!\
   }
 }
 
-module.exports = PreferencesKeybase;
+module.exports = PreferencesEncryption;
