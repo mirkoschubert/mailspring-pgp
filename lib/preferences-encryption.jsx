@@ -11,6 +11,7 @@ import PGPKeyStore from './pgp-key-store';
 import KeybaseSearch from './keybase-search';
 import KeyManager from './key-manager';
 import KeyAdder from './key-adder';
+import PreferencesKeysList from './preferences-keys-list';
 
 
 class PreferencesEncryption extends React.Component {
@@ -48,7 +49,7 @@ class PreferencesEncryption extends React.Component {
       currentAccount = accounts[0];
     }
     const contacts = AccountStore.aliasesFor(accounts);
-    console.log(contacts);
+    //console.log(contacts);
     const pubKeys = PGPKeyStore.pubKeys();
     const privKeys = PGPKeyStore.privKeys({ timed: false });
     return {
@@ -63,38 +64,21 @@ class PreferencesEncryption extends React.Component {
     return (contact.name !== "") ? contact.name + " <" + contact.email + ">" : contact.email;
   }
 
-  _renderKeys() {
-    const pubKeys = PGPKeyStore.pubKeys();
-    const idArr = [];
-    pubKeys.forEach(identity => {
-      idArr.push(identity.clientId);
-    });
-
-    console.log(idArr);
-
+  _renderKeys(email) {
+    const pubKeys = PGPKeyStore.pubKeys(email);
+    const keysList = (
+      <PreferencesKeysList
+        pubKeys={pubKeys}
+      />
+    );
     return (
-      <Flexbox>
-        <EditableList
-          showEditIcon
-          className="keybase-list"
-          items={idArr}
-        />
-        
-      </Flexbox>
+      <div className="contact-keys-list">
+        {keysList}
+      </div>
     );
   }
 
   render() {
-
-    const noKeysMessage = (
-      <div className="key-status-bar no-keys-message">{`\
-You have no saved PGP keys!\
-`}</div>
-    );
-
-    const keyManager = (
-      <KeyManager pubKeys={this.state.pubKeys} privKeys={this.state.privKeys} />
-    );
 
     return (
       <div className="container-keybase">
@@ -102,7 +86,7 @@ You have no saved PGP keys!\
           {this.state.contacts.map(contact => (
           <div key={contact.id}>
             <div className="account-section-title">{this._renderContactHeadline(contact)}</div>
-            <div className="contact-pgp-keys">PGP Keys</div>
+            {this._renderKeys(contact.email)}
           </div>
           ))}
         </section>
@@ -111,9 +95,6 @@ You have no saved PGP keys!\
         </section>
         <section className="keybase">
           <KeybaseSearch inPreferences={true} />
-          {this.state.pubKeys.length === 0 && this.state.privKeys.length === 0
-            ? noKeysMessage
-            : keyManager}
         </section>
       </div>
     );
