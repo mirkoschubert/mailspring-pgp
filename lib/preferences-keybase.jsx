@@ -5,11 +5,13 @@
  * DS206: Consider reworking classes to avoid initClass
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
-const { React, RegExpUtils } = require("mailspring-exports");
-const PGPKeyStore = require("./pgp-key-store");
-const KeybaseSearch = require("./keybase-search");
-const KeyManager = require("./key-manager");
-const KeyAdder = require("./key-adder");
+import { React, RegExpUtils, AccountStore, ContactStore } from 'mailspring-exports';
+import { Flexbox, EditableList } from 'mailspring-component-kit';
+import PGPKeyStore from './pgp-key-store';
+import KeybaseSearch from './keybase-search';
+import KeyManager from './key-manager';
+import KeyAdder from './key-adder';
+
 
 class PreferencesKeybase extends React.Component {
   static displayName = "PreferencesKeybase";
@@ -23,11 +25,12 @@ class PreferencesKeybase extends React.Component {
     this.props = props;
     this._keySaveQueue = {};
 
-    const { pubKeys, privKeys } = this._getStateFromStores();
+    this.state = this._getStateFromStores();
+    {/* const { pubKeys, privKeys } = this._getStateFromStores();
     this.state = {
       pubKeys,
       privKeys
-    };
+    }; */}
   }
 
   componentDidMount() {
@@ -43,9 +46,41 @@ class PreferencesKeybase extends React.Component {
   }
 
   _getStateFromStores() {
+    const accounts = AccountStore.accounts();
+    const state = this.state || {};
+    let { currentAccount } = state;
+    if (!accounts.find(acct => acct === currentAccount)) {
+      currentAccount = accounts[0];
+    }
     const pubKeys = PGPKeyStore.pubKeys();
     const privKeys = PGPKeyStore.privKeys({ timed: false });
-    return { pubKeys, privKeys };
+    return {
+      accounts: accounts,
+      currentAccount: currentAccount,
+      pubKeys: pubKeys,
+      privKeys: privKeys
+    };
+  }
+
+  _renderKeys() {
+    const pubKeys = PGPKeyStore.pubKeys();
+    const idArr = [];
+    pubKeys.forEach(identity => {
+      idArr.push(identity.clientId);
+    });
+
+    console.log(idArr);
+
+    return (
+      <Flexbox>
+        <EditableList
+          showEditIcon
+          className="keybase-list"
+          items={idArr}
+        />
+        
+      </Flexbox>
+    );
   }
 
   render() {
@@ -61,6 +96,7 @@ You have no saved PGP keys!\
 
     return (
       <div className="container-keybase">
+        <section>{this._renderKeys()}</section>
         <section className="key-add">
           <KeyAdder />
         </section>
